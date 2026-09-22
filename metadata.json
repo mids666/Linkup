@@ -1,0 +1,12 @@
+{
+  "name": "Remix Encrypted Video Chat \u0026 Screen Sharing",
+  "description": "Real-time random video chat platform with WebRTC screen sharing, end-to-end encrypted messaging, skipping, reporting, and favorites list.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "display-capture"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
