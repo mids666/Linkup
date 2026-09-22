@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ShieldCheck,
   Star,
@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   Smartphone,
   Bot,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { CallStatus, GenderPreference, PartnerInfo } from '../types';
 
@@ -69,20 +71,71 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
 }) => {
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [needsAudioUnlock, setNeedsAudioUnlock] = useState(false);
 
-  // Attach remote stream
+  // Attach and play remote stream with autoplay fallback for mobile browsers
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
+    const video = remoteVideoRef.current;
+    if (!video) return;
+
+    if (remoteStream) {
+      video.srcObject = remoteStream;
+
+      const attemptPlay = async () => {
+        try {
+          await video.play();
+          setNeedsAudioUnlock(false);
+        } catch (err: any) {
+          console.warn('Remote video unmuted autoplay blocked by browser policy:', err);
+          // On mobile, if unmuted playback is blocked, mute the video element so frames render immediately
+          video.muted = true;
+          try {
+            await video.play();
+            setNeedsAudioUnlock(true);
+          } catch (playErr) {
+            console.error('Remote video playback failed even when muted:', playErr);
+          }
+        }
+      };
+
+      attemptPlay();
+
+      const handleLoadedMetadata = () => {
+        attemptPlay();
+      };
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+      return () => {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
     }
-  }, [remoteStream]);
+  }, [remoteStream, callStatus]);
 
-  // Attach local stream
+  // Attach and play local stream
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
+    const video = localVideoRef.current;
+    if (!video) return;
+
+    if (localStream) {
+      video.srcObject = localStream;
+      video.play().catch(err => {
+        console.warn('Local preview play error:', err);
+      });
     }
   }, [localStream, isScreenSharing]);
+
+  const handleUnlockAudio = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const video = remoteVideoRef.current;
+    if (video) {
+      video.muted = false;
+      video.play().then(() => {
+        setNeedsAudioUnlock(false);
+      }).catch(err => {
+        console.warn('Manual audio unlock failed:', err);
+      });
+    }
+  };
 
   const genderEmoji = (g?: string) => {
     switch (g) {
@@ -117,7 +170,7 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
       />
 
       {/* Main Remote Stage */}
-      {callStatus === 'connected' && remoteStream ? (
+      {callStatus === 'connected' ? (
         <div className="relative w-full h-full flex items-center justify-center bg-black">
           <video
             ref={remoteVideoRef}
@@ -126,6 +179,26 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
             playsInline
             className="w-full h-full object-cover"
           />
+
+          {!remoteStream && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white/80 bg-black/80">
+              <Zap className="w-8 h-8 text-amber-400 animate-spin mb-2" />
+              <span className="text-xs font-medium">Connecting camera feed...</span>
+            </div>
+          )}
+
+          {/* Audio Unlock Banner for mobile browsers */}
+          {needsAudioUnlock && (
+            <button
+              id="btn-unlock-mobile-audio"
+              type="button"
+              onClick={handleUnlockAudio}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-2xl flex items-center gap-2 cursor-pointer transition-all active:scale-95 animate-pulse"
+            >
+              <Volume2 className="w-4 h-4 text-slate-950" />
+              <span>Tap to Enable Partner Audio</span>
+            </button>
+          )}
 
           {/* Camera-on enforcement reminder banner at top center */}
           <div className="absolute top-3 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] text-white/90 pointer-events-none shadow-md">

@@ -40,16 +40,9 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
-    {
-      urls: [
-        'turn:openrelay.metered.ca:80',
-        'turn:openrelay.metered.ca:443',
-        'turn:openrelay.metered.ca:443?transport=tcp',
-      ],
-      username: 'openrelay',
-      credential: 'openrelay',
-    },
   ],
   iceCandidatePoolSize: 10,
 };
@@ -303,11 +296,13 @@ export function useWebRTC() {
           await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: signal.sdp }));
           // Process queued candidates
           while (pendingCandidatesRef.current.length > 0) {
-            const cand = pendingCandidatesRef.current.shift()!;
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(cand));
-            } catch (e) {
-              console.warn('Queued candidate error:', e);
+            const cand = pendingCandidatesRef.current.shift();
+            if (cand && cand.candidate) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(cand));
+              } catch (e) {
+                console.warn('Queued candidate error:', e);
+              }
             }
           }
           const answer = await pc.createAnswer();
@@ -323,23 +318,27 @@ export function useWebRTC() {
           if (pc.signalingState === 'have-local-offer') {
             await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
             while (pendingCandidatesRef.current.length > 0) {
-              const cand = pendingCandidatesRef.current.shift()!;
-              try {
-                await pc.addIceCandidate(new RTCIceCandidate(cand));
-              } catch (e) {
-                console.warn('Queued candidate error:', e);
+              const cand = pendingCandidatesRef.current.shift();
+              if (cand && cand.candidate) {
+                try {
+                  await pc.addIceCandidate(new RTCIceCandidate(cand));
+                } catch (e) {
+                  console.warn('Queued candidate error:', e);
+                }
               }
             }
           }
         } else if (signal.type === 'ice-candidate') {
-          if (pc.remoteDescription && pc.remoteDescription.type) {
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-            } catch (e) {
-              console.warn('ICE candidate error:', e);
+          if (signal.candidate && signal.candidate.candidate) {
+            if (pc.remoteDescription && pc.remoteDescription.type) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+              } catch (e) {
+                console.warn('ICE candidate error:', e);
+              }
+            } else {
+              pendingCandidatesRef.current.push(signal.candidate);
             }
-          } else {
-            pendingCandidatesRef.current.push(signal.candidate);
           }
         }
       } catch (err) {
@@ -354,14 +353,20 @@ export function useWebRTC() {
     async (roomId: string, isHost: boolean) => {
       cleanupPeerConnection();
 
-      // Generate fresh ECDH key pair for this session
+      // 1. Ensure local stream is ready FIRST before instantiating WebRTC
+      let stream = localStreamRef.current;
+      if (!stream || stream.getTracks().length === 0) {
+        stream = await initLocalStream();
+      }
+
+      // 2. Generate fresh ECDH key pair for this session
       const keyPair = await generateECDHKeyPair();
       ecdhKeyPairRef.current = keyPair;
       const pubKeyBase64 = await exportPublicKey(keyPair.publicKey);
       ecdhPublicKeyBase64Ref.current = pubKeyBase64;
 
+      // 3. Create peer connection
       const pc = new RTCPeerConnection(RTC_CONFIG);
-      pcRef.current = pc;
 
       pc.onconnectionstatechange = () => {
         setPeerConnectionState(pc.connectionState);
@@ -384,27 +389,43 @@ export function useWebRTC() {
             type: 'signal',
             signal: {
               type: 'ice-candidate',
-              candidate: event.candidate,
+              candidate: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate,
             },
           });
         }
       };
 
+      // Accumulator stream to ensure all tracks (audio & video) trigger React re-renders
+      const remoteAccumulator = new MediaStream();
       pc.ontrack = (event) => {
+        if (event.track) {
+          // Avoid duplicate track additions
+          const exists = remoteAccumulator.getTracks().some(t => t.id === event.track.id);
+          if (!exists) {
+            remoteAccumulator.addTrack(event.track);
+          }
+          // Produce a fresh MediaStream instance reference so React components attach & play immediately
+          setRemoteStream(new MediaStream(remoteAccumulator.getTracks()));
+        }
+
         if (event.streams && event.streams[0]) {
-          setRemoteStream(event.streams[0]);
+          const primaryStream = event.streams[0];
+          primaryStream.onaddtrack = () => {
+            setRemoteStream(new MediaStream(primaryStream.getTracks()));
+          };
+          setRemoteStream(new MediaStream(primaryStream.getTracks()));
         }
       };
 
-      // Add local stream tracks
-      let stream = localStreamRef.current;
-      if (!stream) {
-        stream = await initLocalStream();
+      // 4. Add all local tracks (video & audio) BEFORE creating offer or answer
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+        });
       }
 
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream!);
-      });
+      // Now it is safe to publish the pc instance to refs for incoming signals
+      pcRef.current = pc;
 
       if (isHost) {
         // Initiator creates data channel
@@ -433,7 +454,7 @@ export function useWebRTC() {
         };
       }
 
-      // Drain any signals that arrived before pc was ready
+      // Drain any signals that arrived before pc finished initializing
       while (pendingSignalsRef.current.length > 0) {
         const queuedSignal = pendingSignalsRef.current.shift();
         if (queuedSignal) {
