@@ -200,6 +200,7 @@ class FirebaseSignalingManager {
 
         if (success) {
           this.currentRoomId = roomId;
+          this.leaveQueue();
           onMatched(roomId, partnerInfo, true);
           return;
         }
@@ -269,22 +270,36 @@ class FirebaseSignalingManager {
 
     // 1. Listen to room closure / status
     const roomRef = doc(db, 'rooms', roomId);
-    this.roomUnsub = onSnapshot(roomRef, (snapshot) => {
-      const data = snapshot.data();
-      if (data && data.status === 'closed') {
-        onPartnerLeft(data.closeReason || 'Partner left the chat.');
+    this.roomUnsub = onSnapshot(
+      roomRef,
+      (snapshot) => {
+        const data = snapshot.data();
+        if (data && data.status === 'closed') {
+          onPartnerLeft(data.closeReason || 'Partner left the chat.');
+        }
+      },
+      (err) => {
+        console.warn('Room listener warning:', err);
       }
-    });
+    );
 
     // 2. Listen to incoming WebRTC signals
     const signalsCol = collection(db, 'rooms', roomId, 'signals');
-    const signalsQuery = query(signalsCol, orderBy('timestamp', 'asc'));
 
-    this.signalsUnsub = onSnapshot(signalsQuery, (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
+    this.signalsUnsub = onSnapshot(
+      signalsCol,
+      (snapshot) => {
+        const addedChanges = snapshot.docChanges().filter((change) => change.type === 'added');
+        // Sort added signals by timestamp so offer is always handled before answer / candidates
+        const sortedChanges = addedChanges.sort((a, b) => {
+          const tA = (a.doc.data().timestamp as number) || 0;
+          const tB = (b.doc.data().timestamp as number) || 0;
+          return tA - tB;
+        });
+
+        for (const change of sortedChanges) {
           const docId = change.doc.id;
-          if (this.processedSignalIds.has(docId)) return;
+          if (this.processedSignalIds.has(docId)) continue;
           this.processedSignalIds.add(docId);
 
           const data = change.doc.data();
@@ -292,17 +307,22 @@ class FirebaseSignalingManager {
             onSignal(data.signal);
           }
         }
-      });
-    });
+      },
+      (err) => {
+        console.error('Signals listener error:', err);
+      }
+    );
   }
 
   // Send WebRTC signal (offer, answer, ice-candidate)
   async sendSignal(roomId: string, senderId: string, signal: any) {
     try {
       const signalsCol = collection(db, 'rooms', roomId, 'signals');
+      // Sanitize signal by JSON parse/stringify to prevent unsupported types / undefined properties in Firestore
+      const cleanSignal = JSON.parse(JSON.stringify(signal));
       await addDoc(signalsCol, {
         senderId,
-        signal,
+        signal: cleanSignal,
         timestamp: Date.now(),
       });
     } catch (err) {

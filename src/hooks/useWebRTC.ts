@@ -44,6 +44,7 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun4.l.google.com:19302' },
     { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
   ],
   iceCandidatePoolSize: 10,
 };
@@ -137,11 +138,11 @@ export function useWebRTC() {
   }, [profile.name, profile.avatarSeed]);
 
   // Clean up WebRTC Peer Connection & E2EE State
-  const cleanupPeerConnection = useCallback(() => {
+  const cleanupPeerConnection = useCallback((shouldLeaveRoom: boolean = false) => {
     isSimulatedRef.current = false;
     pendingSignalsRef.current = [];
 
-    if (currentRoomIdRef.current) {
+    if (shouldLeaveRoom && currentRoomIdRef.current) {
       firebaseSignaling.leaveRoom(currentRoomIdRef.current, 'Partner disconnected');
       currentRoomIdRef.current = null;
     }
@@ -208,6 +209,7 @@ export function useWebRTC() {
         safetyNumber: safetyNum,
         isVerified: true,
       }));
+      setCallStatus('connected');
     } catch (err) {
       console.error('Failed to complete E2EE key agreement:', err);
     }
@@ -218,6 +220,7 @@ export function useWebRTC() {
     dataChannelRef.current = channel;
 
     channel.onopen = async () => {
+      setCallStatus('connected');
       // Exchange ECDH public keys immediately upon open
       if (ecdhPublicKeyBase64Ref.current) {
         channel.send(
@@ -304,7 +307,7 @@ export function useWebRTC() {
           // Process queued candidates
           while (pendingCandidatesRef.current.length > 0) {
             const cand = pendingCandidatesRef.current.shift();
-            if (cand && cand.candidate) {
+            if (cand && (cand.candidate !== undefined || cand.sdpMid !== undefined)) {
               try {
                 await pc.addIceCandidate(new RTCIceCandidate(cand));
               } catch (e) {
@@ -321,8 +324,9 @@ export function useWebRTC() {
               sdp: answer.sdp,
             },
           });
-          if (currentRoomIdRef.current) {
-            firebaseSignaling.sendSignal(currentRoomIdRef.current, profile.id, {
+          const targetRoomId = currentRoomIdRef.current;
+          if (targetRoomId) {
+            firebaseSignaling.sendSignal(targetRoomId, profile.id, {
               type: 'answer',
               sdp: answer.sdp,
             });
@@ -332,7 +336,7 @@ export function useWebRTC() {
             await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
             while (pendingCandidatesRef.current.length > 0) {
               const cand = pendingCandidatesRef.current.shift();
-              if (cand && cand.candidate) {
+              if (cand && (cand.candidate !== undefined || cand.sdpMid !== undefined)) {
                 try {
                   await pc.addIceCandidate(new RTCIceCandidate(cand));
                 } catch (e) {
@@ -342,7 +346,7 @@ export function useWebRTC() {
             }
           }
         } else if (signal.type === 'ice-candidate') {
-          if (signal.candidate && signal.candidate.candidate) {
+          if (signal.candidate && (signal.candidate.candidate !== undefined || signal.candidate.sdpMid !== undefined)) {
             if (pc.remoteDescription && pc.remoteDescription.type) {
               try {
                 await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
@@ -358,13 +362,14 @@ export function useWebRTC() {
         console.error('Error handling WebRTC signal:', err);
       }
     },
-    [sendWs]
+    [sendWs, profile.id]
   );
 
   // Create WebRTC Peer Connection and handle offer/answer
   const createPeerConnection = useCallback(
     async (roomId: string, isHost: boolean) => {
-      cleanupPeerConnection();
+      // Clean up previous RTC state without closing the room we are connecting to
+      cleanupPeerConnection(false);
       currentRoomIdRef.current = roomId;
 
       // 1. Ensure local stream is ready FIRST before instantiating WebRTC
@@ -407,8 +412,9 @@ export function useWebRTC() {
               candidate: candJson,
             },
           });
-          if (roomId) {
-            firebaseSignaling.sendSignal(roomId, profile.id, {
+          const targetRoomId = roomId || currentRoomIdRef.current;
+          if (targetRoomId) {
+            firebaseSignaling.sendSignal(targetRoomId, profile.id, {
               type: 'ice-candidate',
               candidate: candJson,
             });
@@ -427,6 +433,7 @@ export function useWebRTC() {
           }
           // Produce a fresh MediaStream instance reference so React components attach & play immediately
           setRemoteStream(new MediaStream(remoteAccumulator.getTracks()));
+          setCallStatus('connected');
         }
 
         if (event.streams && event.streams[0]) {
@@ -435,6 +442,7 @@ export function useWebRTC() {
             setRemoteStream(new MediaStream(primaryStream.getTracks()));
           };
           setRemoteStream(new MediaStream(primaryStream.getTracks()));
+          setCallStatus('connected');
         }
       };
 
@@ -465,8 +473,9 @@ export function useWebRTC() {
               sdp: offer.sdp,
             },
           });
-          if (roomId) {
-            firebaseSignaling.sendSignal(roomId, profile.id, {
+          const targetRoomId = roomId || currentRoomIdRef.current;
+          if (targetRoomId) {
+            firebaseSignaling.sendSignal(targetRoomId, profile.id, {
               type: 'offer',
               sdp: offer.sdp,
             });
@@ -489,7 +498,7 @@ export function useWebRTC() {
         }
       }
     },
-    [cleanupPeerConnection, initLocalStream, sendWs, setupDataChannel, processSignal]
+    [cleanupPeerConnection, initLocalStream, sendWs, setupDataChannel, processSignal, profile.id]
   );
 
   // Connect WebSocket with auto-reconnect
@@ -585,7 +594,7 @@ export function useWebRTC() {
                   await processSignal(sig, currentPc);
                 },
                 (reason) => {
-                  cleanupPeerConnection();
+                  cleanupPeerConnection(false);
                   setCurrentPartner(null);
                   setCurrentRoomId(null);
                   setDisconnectReason(reason);
@@ -754,7 +763,7 @@ export function useWebRTC() {
     }
 
     const pref = genderPref || profile.genderPreference || 'any';
-    cleanupPeerConnection();
+    cleanupPeerConnection(true);
     setCurrentPartner(null);
     setCurrentRoomId(null);
     currentRoomIdRef.current = null;
@@ -789,7 +798,7 @@ export function useWebRTC() {
             await processSignal(sig, currentPc);
           },
           (reason) => {
-            cleanupPeerConnection();
+            cleanupPeerConnection(false);
             setCurrentPartner(null);
             setCurrentRoomId(null);
             setDisconnectReason(reason);
@@ -807,8 +816,9 @@ export function useWebRTC() {
     isSimulatedRef.current = false;
     sendWs({ type: 'cancel_search' });
     firebaseSignaling.leaveQueue();
+    cleanupPeerConnection(true);
     setCallStatus('idle');
-  }, [sendWs]);
+  }, [sendWs, cleanupPeerConnection]);
 
   // Simulate an instant live test match for testing on a single device or testing mobile setup
   const simulateTestMatch = useCallback(async () => {
@@ -920,12 +930,12 @@ export function useWebRTC() {
       autoFindNext,
       genderPreference: pref,
     });
-    cleanupPeerConnection();
+    cleanupPeerConnection(true);
     setCurrentPartner(null);
     setCurrentRoomId(null);
     setDisconnectReason(null);
     if (autoFindNext) {
-      setCallStatus('searching');
+      startRandomSearch(pref);
     } else {
       setCallStatus('idle');
     }
