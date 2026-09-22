@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "QueueEntry": {
+      "title": "QueueEntry",
+      "description": "User in matchmaking queue",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "avatarSeed": { "type": "string" },
+        "age": { "type": "number" },
+        "gender": { "type": "string" },
+        "country": { "type": "string" },
+        "countryFlag": { "type": "string" },
+        "genderPreference": { "type": "string" },
+        "status": { "type": "string" },
+        "matchedRoomId": { "type": "string" },
+        "isInitiator": { "type": "boolean" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["userId", "userName", "status", "timestamp"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Active WebRTC video chat room",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "initiatorId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["roomId", "initiatorId", "receiverId", "status", "createdAt"]
+    },
+    "Signal": {
+      "title": "Signal",
+      "description": "WebRTC signaling message",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "type": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["senderId", "type", "timestamp"]
+    },
+    "Presence": {
+      "title": "Presence",
+      "description": "User online presence heartbeat",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "lastSeen": { "type": "number" }
+      },
+      "required": ["userId", "lastSeen"]
+    }
+  },
+  "firestore": {
+    "/matchmaking_queue/{userId}": {
+      "schema": "QueueEntry",
+      "description": "Matchmaking waiting pool"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "WebRTC active rooms"
+    },
+    "/rooms/{roomId}/signals/{signalId}": {
+      "schema": "Signal",
+      "description": "SDP offer/answer and ICE candidates"
+    },
+    "/presence/{userId}": {
+      "schema": "Presence",
+      "description": "Real-time user presence"
+    }
+  }
+}

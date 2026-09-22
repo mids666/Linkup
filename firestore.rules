@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Matchmaking queue collection
+    match /matchmaking_queue/{userId} {
+      allow read, write: if true;
+    }
+
+    // Active rooms collection
+    match /rooms/{roomId} {
+      allow read, write: if true;
+
+      // WebRTC signaling subcollection (offer, answer, ICE candidates)
+      match /signals/{signalId} {
+        allow read, write: if true;
+      }
+    }
+
+    // Real-time user presence
+    match /presence/{userId} {
+      allow read, write: if true;
+    }
+
+    // Test connection endpoint
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

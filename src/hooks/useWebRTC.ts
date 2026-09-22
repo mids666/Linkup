@@ -34,6 +34,7 @@ import {
   saveUserProfile,
   updateFavoriteNote,
 } from '../utils/storage';
+import { firebaseSignaling } from '../firebase/signaling';
 
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
@@ -101,6 +102,7 @@ export function useWebRTC() {
   const isSimulatedRef = useRef<boolean>(false);
   const wsSendQueueRef = useRef<string[]>([]);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentRoomIdRef = useRef<string | null>(null);
 
   // Send message over WebSocket with queueing if not yet open
   const sendWs = useCallback((data: unknown) => {
@@ -138,6 +140,11 @@ export function useWebRTC() {
   const cleanupPeerConnection = useCallback(() => {
     isSimulatedRef.current = false;
     pendingSignalsRef.current = [];
+
+    if (currentRoomIdRef.current) {
+      firebaseSignaling.leaveRoom(currentRoomIdRef.current, 'Partner disconnected');
+      currentRoomIdRef.current = null;
+    }
 
     if (dataChannelRef.current) {
       try {
@@ -314,6 +321,12 @@ export function useWebRTC() {
               sdp: answer.sdp,
             },
           });
+          if (currentRoomIdRef.current) {
+            firebaseSignaling.sendSignal(currentRoomIdRef.current, profile.id, {
+              type: 'answer',
+              sdp: answer.sdp,
+            });
+          }
         } else if (signal.type === 'answer') {
           if (pc.signalingState === 'have-local-offer') {
             await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: signal.sdp }));
@@ -352,6 +365,7 @@ export function useWebRTC() {
   const createPeerConnection = useCallback(
     async (roomId: string, isHost: boolean) => {
       cleanupPeerConnection();
+      currentRoomIdRef.current = roomId;
 
       // 1. Ensure local stream is ready FIRST before instantiating WebRTC
       let stream = localStreamRef.current;
@@ -385,13 +399,20 @@ export function useWebRTC() {
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          const candJson = event.candidate.toJSON ? event.candidate.toJSON() : event.candidate;
           sendWs({
             type: 'signal',
             signal: {
               type: 'ice-candidate',
-              candidate: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate,
+              candidate: candJson,
             },
           });
+          if (roomId) {
+            firebaseSignaling.sendSignal(roomId, profile.id, {
+              type: 'ice-candidate',
+              candidate: candJson,
+            });
+          }
         }
       };
 
@@ -444,6 +465,12 @@ export function useWebRTC() {
               sdp: offer.sdp,
             },
           });
+          if (roomId) {
+            firebaseSignaling.sendSignal(roomId, profile.id, {
+              type: 'offer',
+              sdp: offer.sdp,
+            });
+          }
         } catch (err) {
           console.error('Failed creating WebRTC offer:', err);
         }
@@ -539,11 +566,32 @@ export function useWebRTC() {
               break;
 
             case 'match_found': {
+              currentRoomIdRef.current = msg.roomId;
               setCurrentRoomId(msg.roomId);
               setCurrentPartner(msg.partner);
               setIsInitiator(msg.isInitiator);
               setDisconnectReason(null);
               setCallStatus('connecting');
+
+              firebaseSignaling.joinRoom(
+                msg.roomId,
+                profile.id,
+                async (sig) => {
+                  const currentPc = pcRef.current;
+                  if (!currentPc) {
+                    pendingSignalsRef.current.push(sig);
+                    return;
+                  }
+                  await processSignal(sig, currentPc);
+                },
+                (reason) => {
+                  cleanupPeerConnection();
+                  setCurrentPartner(null);
+                  setCurrentRoomId(null);
+                  setDisconnectReason(reason);
+                  setCallStatus('partner_disconnected');
+                }
+              );
 
               await createPeerConnection(msg.roomId, msg.isInitiator);
               break;
@@ -645,6 +693,20 @@ export function useWebRTC() {
     };
   }, [profile.id, profile.name, profile.avatarSeed, profile.age, profile.gender, profile.country, profile.countryFlag, profile.genderPreference, createPeerConnection, cleanupPeerConnection, processSignal]);
 
+  // Start Firebase Firestore real-time presence & online user tracking
+  useEffect(() => {
+    firebaseSignaling.startPresence(profile, (onlineCount) => {
+      setServerStats(prev => ({
+        ...prev,
+        onlineCount: Math.max(prev.onlineCount, onlineCount),
+      }));
+    });
+
+    return () => {
+      firebaseSignaling.stopPresence(profile.id);
+    };
+  }, [profile]);
+
   // Initial media acquisition on load
   useEffect(() => {
     initLocalStream(false);
@@ -695,18 +757,56 @@ export function useWebRTC() {
     cleanupPeerConnection();
     setCurrentPartner(null);
     setCurrentRoomId(null);
+    currentRoomIdRef.current = null;
     setDisconnectReason(null);
     setCallStatus('searching');
+
     sendWs({
       type: 'find_match',
       genderPreference: pref,
     });
-  }, [profile.genderPreference, isVideoEnabled, cleanupPeerConnection, sendWs]);
+
+    // Cloud matchmaking queue for GitHub Pages and cross-network users
+    firebaseSignaling.enterQueue(
+      { ...profile, genderPreference: pref },
+      async (roomId, partner, isInit) => {
+        currentRoomIdRef.current = roomId;
+        setCurrentRoomId(roomId);
+        setCurrentPartner(partner);
+        setIsInitiator(isInit);
+        setDisconnectReason(null);
+        setCallStatus('connecting');
+
+        firebaseSignaling.joinRoom(
+          roomId,
+          profile.id,
+          async (sig) => {
+            const currentPc = pcRef.current;
+            if (!currentPc) {
+              pendingSignalsRef.current.push(sig);
+              return;
+            }
+            await processSignal(sig, currentPc);
+          },
+          (reason) => {
+            cleanupPeerConnection();
+            setCurrentPartner(null);
+            setCurrentRoomId(null);
+            setDisconnectReason(reason);
+            setCallStatus('partner_disconnected');
+          }
+        );
+
+        await createPeerConnection(roomId, isInit);
+      }
+    );
+  }, [profile, isVideoEnabled, cleanupPeerConnection, sendWs, createPeerConnection, processSignal]);
 
   // Cancel search
   const cancelSearch = useCallback(() => {
     isSimulatedRef.current = false;
     sendWs({ type: 'cancel_search' });
+    firebaseSignaling.leaveQueue();
     setCallStatus('idle');
   }, [sendWs]);
 
@@ -808,6 +908,11 @@ export function useWebRTC() {
         setCallStatus('idle');
       }
       return;
+    }
+
+    firebaseSignaling.leaveQueue();
+    if (currentRoomIdRef.current) {
+      firebaseSignaling.leaveRoom(currentRoomIdRef.current, 'Partner skipped to the next person.');
     }
 
     sendWs({
