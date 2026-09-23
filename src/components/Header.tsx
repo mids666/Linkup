@@ -1,12 +1,10 @@
 import React from 'react';
 import {
   ShieldCheck,
-  Users,
   Video,
   Star,
   ExternalLink,
   Radio,
-  Lock,
   Palette,
   Smartphone,
 } from 'lucide-react';
@@ -47,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
     window.open(window.location.href, '_blank');
   };
 
-  const activeThemeConfig = THEMES[currentTheme] || THEMES['cyber-dark'];
+  const activeThemeConfig = THEMES[currentTheme] || THEMES['apple-dark'];
 
   return (
     <header
@@ -57,162 +55,121 @@ export const Header: React.FC<HeaderProps> = ({
         borderColor: 'var(--theme-border)',
         color: 'var(--theme-text)',
       }}
-      className="h-16 border-b backdrop-blur-md px-4 md:px-6 flex items-center justify-between z-30 select-none transition-colors duration-200"
+      className="h-14 border-b backdrop-blur-2xl px-4 sm:px-6 flex items-center justify-between z-30 select-none transition-colors duration-200"
     >
-      {/* Brand & Status */}
+      {/* Zone 1: Apple-style Single Wordmark & Quiet Status */}
       <div className="flex items-center gap-3">
-        <div
-          style={{
-            backgroundColor: 'var(--theme-accent-subtle)',
-            borderColor: 'var(--theme-accent-border)',
-            color: 'var(--theme-accent)',
-          }}
-          className="w-10 h-10 rounded-xl border flex items-center justify-center shadow-sm"
-        >
-          <Video className="w-5 h-5" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1
-              style={{ color: 'var(--theme-text)' }}
-              className="text-base font-bold tracking-tight"
-            >
-              NexusChat
-            </h1>
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <Lock className="w-2.5 h-2.5" />
-              E2EE
-            </span>
-          </div>
+        <div className="flex items-center gap-2">
           <div
-            style={{ color: 'var(--theme-text-muted)' }}
-            className="flex items-center gap-2 text-xs"
+            style={{
+              backgroundColor: 'var(--theme-accent)',
+              color: 'var(--theme-accent-text)',
+            }}
+            className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm"
           >
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {serverStats.onlineCount} online
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3 opacity-60" />
-              {serverStats.activeChatCount} calls
-            </span>
+            <Video className="w-4 h-4" />
           </div>
+          <span
+            style={{ color: 'var(--theme-text)' }}
+            className="text-sm font-semibold tracking-tight"
+          >
+            Nexus
+          </span>
+        </div>
+
+        {/* Clean, unboxed status metadata with typographic separators */}
+        <div
+          style={{ color: 'var(--theme-text-muted)' }}
+          className="hidden md:flex items-center gap-2 text-xs font-normal"
+        >
+          <span aria-hidden="true" className="opacity-40">/</span>
+          <span>End-to-End Encrypted</span>
+          <span aria-hidden="true" className="opacity-40">·</span>
+          <span>{serverStats.onlineCount.toLocaleString()} online</span>
         </div>
       </div>
 
-      {/* Center/Right Actions */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5">
-        {/* Dynamic Theme Selection Button */}
-        <button
-          id="btn-open-theme-section"
-          type="button"
-          onClick={onOpenThemeModal}
-          style={{
-            backgroundColor: 'var(--theme-surface-solid)',
-            borderColor: 'var(--theme-border-strong)',
-            color: 'var(--theme-text)',
-          }}
-          title={`Active Theme: ${activeThemeConfig.name} (${activeThemeConfig.tagline}). Click to customize theme.`}
-          className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-xl border transition-all cursor-pointer hover:opacity-90 shadow-sm active:scale-95"
-        >
-          <div className="flex items-center gap-1.5">
-            <span
-              className="w-2.5 h-2.5 rounded-full shadow-sm"
-              style={{ backgroundColor: 'var(--theme-accent)' }}
-            />
-            <Palette className="w-3.5 h-3.5" style={{ color: 'var(--theme-accent)' }} />
-          </div>
-          <div className="flex flex-col text-left leading-none">
-            <span className="text-[11px] font-bold">{activeThemeConfig.name}</span>
-            <span className="hidden md:inline text-[9px]" style={{ color: 'var(--theme-accent)' }}>
-              Theme
-            </span>
-          </div>
-        </button>
-
-        {/* Virtual Stream Toggle */}
+      {/* Zone 3: Polished Apple-style Action Affordances */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Virtual Mode Toggle */}
         <button
           id="btn-toggle-virtual-mode"
           type="button"
           onClick={onToggleVirtualMode}
-          title={isVirtualStream ? 'Using virtual avatar stream' : 'Using physical webcam'}
+          title={isVirtualStream ? 'Using virtual avatar stream' : 'Using physical camera'}
           style={{
-            backgroundColor: isVirtualStream
-              ? 'rgba(245, 158, 11, 0.15)'
-              : 'var(--theme-surface-solid)',
-            borderColor: isVirtualStream
-              ? 'rgba(245, 158, 11, 0.4)'
-              : 'var(--theme-border)',
-            color: isVirtualStream ? '#f59e0b' : 'var(--theme-text-muted)',
+            borderColor: isVirtualStream ? 'var(--theme-accent)' : 'var(--theme-border)',
           }}
-          className="hidden md:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer"
+          className={`hidden lg:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-all cursor-pointer ${
+            isVirtualStream
+              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+              : 'hover:bg-white/[0.06] text-[var(--theme-text-muted)]'
+          }`}
         >
           <Radio className="w-3.5 h-3.5" />
-          <span>{isVirtualStream ? 'Virtual' : 'Webcam'}</span>
+          <span>{isVirtualStream ? 'Virtual Stream' : 'Camera'}</span>
         </button>
 
-        {/* Security / E2EE Inspector Button */}
+        {/* E2EE Security Inspector */}
         <button
           id="btn-crypto-inspector-header"
           type="button"
           onClick={onOpenCryptoInspector}
           style={{
-            backgroundColor: 'var(--theme-accent-subtle)',
-            borderColor: 'var(--theme-accent-border)',
-            color: 'var(--theme-accent)',
+            borderColor: 'var(--theme-border)',
+            color: 'var(--theme-text-muted)',
           }}
-          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer"
+          title="End-to-End Encryption verification & parameters"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border hover:bg-white/[0.06] hover:text-[var(--theme-text)] transition-colors cursor-pointer"
         >
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline font-medium">E2EE</span>
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="hidden sm:inline font-normal">Security</span>
         </button>
 
-        {/* Favorites Drawer Trigger */}
+        {/* Appearance / Theme Selector */}
+        <button
+          id="btn-open-theme-section"
+          type="button"
+          onClick={onOpenThemeModal}
+          style={{
+            borderColor: 'var(--theme-border)',
+            color: 'var(--theme-text-muted)',
+          }}
+          title={`Appearance: ${activeThemeConfig.name}. Click to change.`}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border hover:bg-white/[0.06] hover:text-[var(--theme-text)] transition-colors cursor-pointer"
+        >
+          <Palette className="w-3.5 h-3.5" />
+          <span className="hidden md:inline font-normal">{activeThemeConfig.name}</span>
+        </button>
+
+        {/* Favorites */}
         <button
           id="btn-open-favorites"
           type="button"
           onClick={onOpenFavorites}
           style={{
-            backgroundColor: 'var(--theme-surface-solid)',
             borderColor: 'var(--theme-border)',
             color: 'var(--theme-text)',
           }}
-          className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl border transition-all relative cursor-pointer hover:opacity-90"
+          title="Saved favorite contacts"
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border hover:bg-white/[0.06] transition-colors relative cursor-pointer"
         >
-          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
-          <span className="hidden sm:inline font-medium">Favorites</span>
+          <Star className={`w-3.5 h-3.5 ${favoriteCount > 0 ? 'text-amber-400 fill-amber-400/40' : 'text-[var(--theme-text-muted)]'}`} />
+          <span className="hidden sm:inline font-normal">Favorites</span>
           {favoriteCount > 0 && (
             <span
               style={{
                 backgroundColor: 'var(--theme-accent-subtle)',
-                color: 'var(--theme-text)',
+                color: 'var(--theme-accent)',
               }}
-              className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold"
+              className="px-1.5 py-0.2 rounded-full text-[10px] font-medium"
             >
               {favoriteCount}
             </span>
           )}
           {onlineFavoritesCount > 0 && (
-            <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black absolute -top-0.5 -right-0.5" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 absolute top-1 right-1" />
           )}
-        </button>
-
-        {/* Multi-Tab Test Button */}
-        <button
-          id="btn-dual-test-window"
-          type="button"
-          onClick={handleOpenNewTab}
-          style={{
-            backgroundColor: 'var(--theme-surface-solid)',
-            borderColor: 'var(--theme-border)',
-            color: 'var(--theme-text-muted)',
-          }}
-          title="Open second window to test matchmaking between 2 users"
-          className="hidden xl:flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-xl border hover:opacity-90 cursor-pointer"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          <span>Dual Tab</span>
         </button>
 
         {/* Test on Mobile / QR Code Button */}
@@ -222,67 +179,59 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
             onClick={onOpenTestMobile}
             style={{
-              backgroundColor: 'var(--theme-surface-solid)',
-              borderColor: 'var(--theme-border-strong)',
-              color: 'var(--theme-text)',
+              borderColor: 'var(--theme-border)',
+              color: 'var(--theme-text-muted)',
             }}
-            title="Scan QR Code to test on Mobile device or simulate live match"
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl border hover:opacity-90 cursor-pointer shadow-sm active:scale-95"
+            title="Scan QR Code to test on Mobile device"
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border hover:bg-white/[0.06] hover:text-[var(--theme-text)] transition-colors cursor-pointer"
           >
-            <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="hidden sm:inline font-semibold">Test Mobile</span>
-            <span className="sm:hidden font-semibold">Test</span>
+            <Smartphone className="w-3.5 h-3.5" />
+            <span className="hidden md:inline font-normal">Connect Mobile</span>
           </button>
         )}
 
-        {/* User Profile Chip */}
+        {/* Dual Tab Multi-Window Test */}
+        <button
+          id="btn-dual-test-window"
+          type="button"
+          onClick={handleOpenNewTab}
+          style={{
+            borderColor: 'var(--theme-border)',
+            color: 'var(--theme-text-muted)',
+          }}
+          title="Open second window to test matchmaking between 2 users"
+          className="hidden xl:flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border hover:bg-white/[0.06] hover:text-[var(--theme-text)] transition-colors cursor-pointer"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Apple ID Style Profile Pill */}
         <button
           id="btn-header-profile-card"
           type="button"
           onClick={onOpenProfileModal}
           style={{
-            backgroundColor: 'var(--theme-surface-solid)',
             borderColor: 'var(--theme-border-strong)',
-            color: 'var(--theme-text)',
+            backgroundColor: 'var(--theme-surface-solid)',
           }}
-          title="Edit Profile (Age, Gender, Country)"
-          className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-xl border transition-all cursor-pointer group shadow-sm hover:opacity-90"
+          title="Edit Profile"
+          className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full border transition-all cursor-pointer hover:opacity-90 shadow-sm"
         >
           <div
             style={{
               backgroundColor: 'var(--theme-accent)',
               color: 'var(--theme-accent-text)',
             }}
-            className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden"
+            className="w-6 h-6 rounded-full flex items-center justify-center font-medium text-[11px] shadow-sm overflow-hidden"
           >
-            <span className="text-xs">{profile.countryFlag || '🌐'}</span>
+            <span>{profile.countryFlag || (profile.name ? profile.name.charAt(0).toUpperCase() : 'U')}</span>
           </div>
-          <div className="text-left leading-none">
-            <div className="flex items-center gap-1">
-              <span
-                style={{ color: 'var(--theme-text)' }}
-                className="text-xs font-semibold max-w-[85px] sm:max-w-[110px] truncate"
-              >
-                {profile.name}
-              </span>
-              {profile.age && (
-                <span
-                  style={{ color: 'var(--theme-text-muted)' }}
-                  className="text-[10px]"
-                >
-                  {profile.age}
-                </span>
-              )}
-            </div>
-            <div
-              style={{ color: 'var(--theme-text-muted)' }}
-              className="text-[9px] capitalize flex items-center gap-1 mt-0.5"
-            >
-              <span>{profile.gender || 'profile'}</span>
-              <span>•</span>
-              <span>{profile.country || 'Global'}</span>
-            </div>
-          </div>
+          <span
+            style={{ color: 'var(--theme-text)' }}
+            className="text-xs font-medium max-w-[90px] truncate"
+          >
+            {profile.name || 'Account'}
+          </span>
         </button>
       </div>
     </header>

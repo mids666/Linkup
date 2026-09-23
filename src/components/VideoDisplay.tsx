@@ -1,23 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ShieldCheck,
   Star,
   Flag,
   MonitorUp,
   MicOff,
   VideoOff,
-  Sparkles,
   Search,
   X,
   Lock,
-  Zap,
   RotateCcw,
   Video,
-  AlertTriangle,
   Smartphone,
-  Bot,
+  Sparkles,
   Volume2,
-  VolumeX,
 } from 'lucide-react';
 import { CallStatus, GenderPreference, PartnerInfo } from '../types';
 
@@ -87,7 +82,6 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
           setNeedsAudioUnlock(false);
         } catch (err: any) {
           console.warn('Remote video unmuted autoplay blocked by browser policy:', err);
-          // On mobile, if unmuted playback is blocked, mute the video element so frames render immediately
           video.muted = true;
           try {
             await video.play();
@@ -137,35 +131,20 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
     }
   };
 
-  const genderEmoji = (g?: string) => {
-    switch (g) {
-      case 'female':
-        return '👩';
-      case 'male':
-        return '👨';
-      case 'nonbinary':
-        return '🧑';
-      default:
-        return '✨';
-    }
-  };
-
   return (
     <div
       id="video-stage-container"
       style={{
-        backgroundColor: 'var(--theme-bg-subtle)',
+        backgroundColor: 'var(--theme-bg)',
         color: 'var(--theme-text)',
       }}
       className="relative flex-1 w-full h-full min-h-[420px] flex items-center justify-center overflow-hidden transition-colors duration-200"
     >
-      {/* Background Subtle Grid Pattern */}
+      {/* Subtle Apple Studio Ambient Spotlight */}
       <div
-        className="absolute inset-0 opacity-20 pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-40"
         style={{
-          backgroundImage:
-            'radial-gradient(circle at 1px 1px, var(--theme-border-strong) 1px, transparent 0)',
-          backgroundSize: '2.5rem 2.5rem',
+          background: 'radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.05) 0%, transparent 70%)',
         }}
       />
 
@@ -181,9 +160,9 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
           />
 
           {!remoteStream && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white/80 bg-black/80">
-              <Zap className="w-8 h-8 text-amber-400 animate-spin mb-2" />
-              <span className="text-xs font-medium">Connecting camera feed...</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white/80 bg-black/70 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin mb-3" />
+              <span className="text-xs font-medium text-zinc-300">Connecting video...</span>
             </div>
           )}
 
@@ -193,67 +172,45 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
               id="btn-unlock-mobile-audio"
               type="button"
               onClick={handleUnlockAudio}
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 px-5 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-2xl flex items-center gap-2 cursor-pointer transition-all active:scale-95 animate-pulse"
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 px-4 py-2.5 rounded-full bg-white text-black font-medium text-xs shadow-xl flex items-center gap-2 cursor-pointer transition-all active:scale-95 hover:bg-zinc-200"
             >
-              <Volume2 className="w-4 h-4 text-slate-950" />
-              <span>Tap to Enable Partner Audio</span>
+              <Volume2 className="w-4 h-4 text-black" />
+              <span>Tap to Enable Audio</span>
             </button>
           )}
 
-          {/* Camera-on enforcement reminder banner at top center */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] text-white/90 pointer-events-none shadow-md">
-            <Video className="w-3 h-3 text-emerald-400" />
-            <span>Camera Required: Disabling camera stops the call automatically</span>
-          </div>
-
-          {/* Top HUD: Partner Info & Quick Skip */}
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-            {/* Partner Details */}
+          {/* Top Floating Glass HUD Pill (Apple Dynamic Island / FaceTime Header) */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+            {/* Partner Info Capsule */}
             <div
               style={{
-                backgroundColor: 'var(--theme-surface)',
-                borderColor: 'var(--theme-border)',
-                color: 'var(--theme-text)',
+                backgroundColor: 'rgba(20, 20, 22, 0.75)',
+                borderColor: 'rgba(255, 255, 255, 0.12)',
               }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-2xl backdrop-blur-md border pointer-events-auto shadow-xl"
+              className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full backdrop-blur-2xl border pointer-events-auto shadow-2xl text-white"
             >
               <div
-                style={{
-                  backgroundColor: 'var(--theme-accent)',
-                  color: 'var(--theme-accent-text)',
-                }}
-                className="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold shadow-sm"
+                style={{ backgroundColor: 'var(--theme-accent)' }}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white shadow-sm"
               >
-                {currentPartner?.countryFlag || (currentPartner?.name.charAt(0).toUpperCase() || 'P')}
+                {currentPartner?.countryFlag || (currentPartner?.name ? currentPartner.name.charAt(0).toUpperCase() : 'P')}
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 leading-none">
-                  <span className="text-xs font-semibold">{currentPartner?.name || 'Partner'}</span>
-                  {currentPartner?.age && (
-                    <span
-                      style={{
-                        backgroundColor: 'var(--theme-surface-solid)',
-                        borderColor: 'var(--theme-border)',
-                        color: 'var(--theme-text-muted)',
-                      }}
-                      className="text-[10px] px-1 py-0.2 rounded border"
-                    >
-                      {currentPartner.age}
-                    </span>
-                  )}
-                  {currentPartner?.gender && (
-                    <span className="text-xs" title={`Gender: ${currentPartner.gender}`}>
-                      {genderEmoji(currentPartner.gender)}
-                    </span>
-                  )}
-                </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-semibold text-white tracking-tight">
+                  {currentPartner?.name || 'Partner'}
+                </span>
+                {currentPartner?.age && (
+                  <span className="text-zinc-400 font-normal">
+                    {currentPartner.age}
+                  </span>
+                )}
                 {currentPartner?.country && (
-                  <div
-                    style={{ color: 'var(--theme-text-muted)' }}
-                    className="text-[10px] mt-0.5 leading-none"
-                  >
-                    {currentPartner.country}
-                  </div>
+                  <>
+                    <span className="text-zinc-500 font-normal">·</span>
+                    <span className="text-zinc-400 font-normal">
+                      {currentPartner.country}
+                    </span>
+                  </>
                 )}
               </div>
 
@@ -261,137 +218,104 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
                 id="btn-partner-crypto-badge"
                 type="button"
                 onClick={onOpenCryptoInspector}
-                className="ml-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full hover:bg-emerald-500/20 transition-colors"
+                className="ml-1 flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 transition-colors"
                 title="End-to-End Encrypted Session"
               >
-                <Lock className="w-2.5 h-2.5" />
-                <span className="hidden sm:inline">E2EE</span>
+                <Lock className="w-3 h-3" />
+                <span className="hidden sm:inline font-normal">Encrypted</span>
               </button>
             </div>
 
-            {/* Top Right Action Buttons: Skip, Favorite & Report */}
+            {/* Top Right Actions: Skip & Favorite */}
             <div className="flex items-center gap-2 pointer-events-auto">
-              {/* Skip Button in HUD */}
+              {/* Skip / Next Button */}
               <button
                 id="btn-skip-hud"
                 type="button"
                 onClick={onSkip}
-                className="py-1.5 px-3.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                title="Skip to next random person"
+                className="py-1.5 px-4 rounded-full bg-[#ff3b30] hover:bg-[#e03126] text-white text-xs font-medium shadow-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                title="Skip to next person"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Skip</span>
+                <span>Next</span>
               </button>
 
-              {/* Add to Favorites Button */}
+              {/* Add to Favorites */}
               <button
                 id="btn-toggle-favorite-hud"
                 type="button"
                 onClick={onToggleFavorite}
                 style={{
                   backgroundColor: isCurrentPartnerFavorite
-                    ? 'rgba(245, 158, 11, 0.25)'
-                    : 'var(--theme-surface)',
-                  borderColor: isCurrentPartnerFavorite
-                    ? 'rgba(245, 158, 11, 0.5)'
-                    : 'var(--theme-border)',
-                  color: isCurrentPartnerFavorite ? '#fbbf24' : 'var(--theme-text)',
+                    ? 'rgba(255, 255, 255, 0.2)'
+                    : 'rgba(20, 20, 22, 0.75)',
+                  borderColor: 'rgba(255, 255, 255, 0.12)',
                 }}
-                className="p-2 rounded-xl border backdrop-blur-md transition-all cursor-pointer shadow-md"
+                className="p-2 rounded-full border backdrop-blur-2xl transition-all cursor-pointer shadow-lg text-white hover:bg-white/15"
                 title={isCurrentPartnerFavorite ? 'Saved in Favorites' : 'Add to Favorites'}
               >
                 <Star
-                  className={`w-4 h-4 ${
-                    isCurrentPartnerFavorite ? 'fill-amber-400 text-amber-400' : ''
+                  className={`w-3.5 h-3.5 ${
+                    isCurrentPartnerFavorite ? 'fill-amber-400 text-amber-400' : 'text-white'
                   }`}
                 />
               </button>
 
-              {/* Report Button */}
+              {/* Report */}
               <button
                 id="btn-report-hud"
                 type="button"
                 onClick={onOpenReport}
                 style={{
-                  backgroundColor: 'var(--theme-surface)',
-                  borderColor: 'var(--theme-border)',
-                  color: 'var(--theme-text-muted)',
+                  backgroundColor: 'rgba(20, 20, 22, 0.75)',
+                  borderColor: 'rgba(255, 255, 255, 0.12)',
                 }}
-                className="p-2 rounded-xl border hover:text-rose-400 backdrop-blur-md transition-all cursor-pointer shadow-md"
-                title="Report or Block User"
+                className="p-2 rounded-full border hover:text-rose-400 backdrop-blur-2xl transition-all cursor-pointer shadow-lg text-zinc-400 hover:bg-white/15"
+                title="Report User"
               >
-                <Flag className="w-4 h-4" />
+                <Flag className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         </div>
       ) : (
-        /* State Card Overlay when not connected */
+        /* State Stage Overlay when not connected */
         <div
           id="state-overlay-card"
-          style={{
-            backgroundColor: 'var(--theme-card)',
-            borderColor: 'var(--theme-border-strong)',
-            color: 'var(--theme-text)',
-            boxShadow: '0 20px 50px -10px var(--theme-glow)',
-          }}
-          className="relative z-10 max-w-lg w-full mx-4 p-6 sm:p-8 rounded-3xl border shadow-2xl backdrop-blur-xl text-center transition-all duration-200"
+          className="relative z-10 max-w-xl w-full mx-4 px-6 py-10 sm:py-14 text-center transition-all duration-200"
         >
           {callStatus === 'idle' && (
-            <div className="space-y-5">
-              <div
-                style={{
-                  backgroundColor: 'var(--theme-accent-subtle)',
-                  borderColor: 'var(--theme-accent-border)',
-                  color: 'var(--theme-accent)',
-                }}
-                className="w-14 h-14 mx-auto rounded-2xl border flex items-center justify-center shadow-md"
-              >
-                <Sparkles className="w-7 h-7" />
-              </div>
-              <div className="space-y-1">
-                <h2
+            <div className="space-y-6 sm:space-y-8">
+              {/* Apple Hero Statement */}
+              <div className="space-y-3">
+                <h1
                   style={{ color: 'var(--theme-text)' }}
-                  className="text-xl font-bold tracking-tight"
+                  className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight leading-tight"
                 >
-                  Instant Video Chat
-                </h2>
+                  Connect instantly.
+                </h1>
                 <p
                   style={{ color: 'var(--theme-text-muted)' }}
-                  className="text-xs leading-relaxed max-w-sm mx-auto"
+                  className="text-sm sm:text-base leading-relaxed max-w-md mx-auto"
                 >
-                  Meet verified adults worldwide with real-time screen sharing and E2E encryption.
+                  Private random video conversations with verified adults worldwide. Secured with end-to-end encryption.
                 </p>
               </div>
 
-              {/* Gender Preference Quick Selector */}
-              <div
-                style={{
-                  backgroundColor: 'var(--theme-surface-solid)',
-                  borderColor: 'var(--theme-border)',
-                }}
-                className="p-3.5 rounded-2xl border text-left"
-              >
-                <div className="flex items-center justify-between mb-2.5">
-                  <span
-                    style={{ color: 'var(--theme-text)' }}
-                    className="text-xs font-semibold"
-                  >
-                    Who do you want to match with?
-                  </span>
-                  <span
-                    style={{ color: 'var(--theme-accent)' }}
-                    className="text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    Filter
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
+              {/* Apple-style Segmented Filter Bar */}
+              <div className="max-w-xs sm:max-w-sm mx-auto">
+                <div
+                  style={{
+                    backgroundColor: 'var(--theme-surface-solid)',
+                    borderColor: 'var(--theme-border)',
+                  }}
+                  className="p-1 rounded-full border flex items-center justify-between"
+                >
                   {[
-                    { id: 'any', label: 'Anyone', icon: '🌐' },
-                    { id: 'female', label: 'Female', icon: '👩' },
-                    { id: 'male', label: 'Male', icon: '👨' },
-                    { id: 'nonbinary', label: 'Non-Binary', icon: '🧑' },
+                    { id: 'any', label: 'Everyone' },
+                    { id: 'female', label: 'Women' },
+                    { id: 'male', label: 'Men' },
+                    { id: 'nonbinary', label: 'Non-Binary' },
                   ].map(item => {
                     const isSelected = genderPreference === item.id;
                     return (
@@ -401,125 +325,64 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
                         type="button"
                         onClick={() => onSelectGenderPreference(item.id as GenderPreference)}
                         style={{
-                          backgroundColor: isSelected
-                            ? 'var(--theme-accent)'
-                            : 'var(--theme-surface)',
-                          borderColor: isSelected
-                            ? 'var(--theme-accent)'
-                            : 'var(--theme-border)',
-                          color: isSelected
-                            ? 'var(--theme-accent-text)'
-                            : 'var(--theme-text-muted)',
+                          backgroundColor: isSelected ? 'var(--theme-accent)' : 'transparent',
+                          color: isSelected ? 'var(--theme-accent-text)' : 'var(--theme-text-muted)',
                         }}
-                        className="py-2 px-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1 transition-all cursor-pointer shadow-sm hover:opacity-95"
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-full transition-all cursor-pointer text-center truncate ${
+                          isSelected ? 'shadow-sm font-semibold' : 'hover:text-[var(--theme-text)]'
+                        }`}
                       >
-                        <span className="text-xs">{item.icon}</span>
-                        <span className="text-[11px] font-semibold truncate">{item.label}</span>
+                        {item.label}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Mandatory Camera Notice */}
-              <div
-                style={{
-                  backgroundColor: 'var(--theme-accent-subtle)',
-                  borderColor: 'var(--theme-accent-border)',
-                  color: 'var(--theme-text)',
-                }}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl border text-left text-[11px]"
-              >
-                <Video className="w-4 h-4 shrink-0" style={{ color: 'var(--theme-accent)' }} />
-                <span>
-                  <strong>Camera Rule:</strong> Video chat requires an active camera. Disabling camera stops the call automatically.
-                </span>
-              </div>
+              {/* Main Apple Action CTA Button */}
+              <div className="pt-1 flex flex-col items-center gap-3">
+                <button
+                  id="btn-start-random-match"
+                  type="button"
+                  onClick={onStartSearch}
+                  style={{
+                    backgroundColor: 'var(--theme-accent)',
+                    color: 'var(--theme-accent-text)',
+                  }}
+                  className="w-full sm:w-auto min-w-[220px] py-3.5 px-8 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md hover:opacity-95 active:scale-[0.98]"
+                >
+                  <Video className="w-4 h-4" />
+                  <span>Start Video Chat</span>
+                </button>
 
-              {/* Feature Pills */}
-              <div className="grid grid-cols-2 gap-2 text-left">
+                {/* Clean Unboxed Trust Markers (Anti-Slop) */}
                 <div
-                  style={{
-                    backgroundColor: 'var(--theme-surface-solid)',
-                    borderColor: 'var(--theme-border)',
-                  }}
-                  className="flex items-center gap-2 p-2.5 rounded-xl border"
+                  style={{ color: 'var(--theme-text-muted)' }}
+                  className="flex items-center justify-center gap-2 text-[12px] font-normal"
                 >
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <div>
-                    <div
-                      style={{ color: 'var(--theme-text)' }}
-                      className="text-[11px] font-semibold"
-                    >
-                      End-to-End Encrypted
-                    </div>
-                    <div
-                      style={{ color: 'var(--theme-text-muted)' }}
-                      className="text-[10px]"
-                    >
-                      AES-GCM 256-bit
-                    </div>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    backgroundColor: 'var(--theme-surface-solid)',
-                    borderColor: 'var(--theme-border)',
-                  }}
-                  className="flex items-center gap-2 p-2.5 rounded-xl border"
-                >
-                  <MonitorUp
-                    className="w-4 h-4 shrink-0"
-                    style={{ color: 'var(--theme-accent)' }}
-                  />
-                  <div>
-                    <div
-                      style={{ color: 'var(--theme-text)' }}
-                      className="text-[11px] font-semibold"
-                    >
-                      Screen Sharing
-                    </div>
-                    <div
-                      style={{ color: 'var(--theme-text-muted)' }}
-                      className="text-[10px]"
-                    >
-                      HD WebRTC feed
-                    </div>
-                  </div>
+                  <span>End-to-End Encrypted</span>
+                  <span aria-hidden="true">·</span>
+                  <span>HD WebRTC</span>
+                  <span aria-hidden="true">·</span>
+                  <span>Camera Required</span>
                 </div>
               </div>
 
-              <button
-                id="btn-start-random-match"
-                type="button"
-                onClick={onStartSearch}
-                style={{
-                  backgroundColor: 'var(--theme-accent)',
-                  color: 'var(--theme-accent-text)',
-                  boxShadow: '0 10px 25px -5px var(--theme-glow)',
-                }}
-                className="w-full py-3.5 px-6 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] hover:opacity-95"
-              >
-                <Search className="w-4 h-4" />
-                <span>Start Video Chat</span>
-              </button>
-
-              {/* Quick Testing Options (Mobile QR & Simulation) */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+              {/* Subtle Accessory Actions (Mobile QR & Simulation) */}
+              <div className="flex items-center justify-center gap-3 pt-2">
                 {onOpenTestMobile && (
                   <button
                     id="btn-idle-open-mobile-test"
                     type="button"
                     onClick={onOpenTestMobile}
                     style={{
-                      backgroundColor: 'var(--theme-surface-solid)',
-                      borderColor: 'var(--theme-border-strong)',
-                      color: 'var(--theme-text)',
+                      borderColor: 'var(--theme-border)',
+                      color: 'var(--theme-text-muted)',
                     }}
-                    className="flex-1 py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:opacity-90 shadow-sm"
+                    className="py-2 px-4 rounded-full border text-xs font-normal flex items-center gap-1.5 transition-colors cursor-pointer hover:bg-white/[0.06] hover:text-[var(--theme-text)]"
                   >
-                    <Smartphone className="w-4 h-4 text-emerald-400" />
-                    <span>Scan Mobile QR Code</span>
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Connect Phone</span>
                   </button>
                 )}
                 {onSimulateTestMatch && (
@@ -528,14 +391,13 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
                     type="button"
                     onClick={onSimulateTestMatch}
                     style={{
-                      backgroundColor: 'var(--theme-accent-subtle)',
-                      borderColor: 'var(--theme-accent-border)',
-                      color: 'var(--theme-accent)',
+                      borderColor: 'var(--theme-border)',
+                      color: 'var(--theme-text-muted)',
                     }}
-                    className="flex-1 py-2.5 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:opacity-90 shadow-sm"
+                    className="py-2 px-4 rounded-full border text-xs font-normal flex items-center gap-1.5 transition-colors cursor-pointer hover:bg-white/[0.06] hover:text-[var(--theme-text)]"
                   >
-                    <Bot className="w-4 h-4" />
-                    <span>Simulate Instant Match</span>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Demo Call</span>
                   </button>
                 )}
               </div>
@@ -544,75 +406,53 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
 
           {callStatus === 'searching' && (
             <div className="space-y-6">
-              {/* Radar Wave Animation with Theme Accent */}
-              <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
-                <div
-                  style={{ borderColor: 'var(--theme-accent)' }}
-                  className="absolute inset-0 rounded-full border-2 animate-ping opacity-50"
-                />
-                <div
-                  style={{ borderColor: 'var(--theme-accent)' }}
-                  className="absolute inset-2 rounded-full border animate-pulse opacity-80"
-                />
+              {/* Apple AirDrop / Find My Concentric Ripples */}
+              <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border border-white/10 animate-ping opacity-30" />
+                <div className="absolute inset-3 rounded-full border border-white/15 animate-pulse" />
                 <div
                   style={{
                     backgroundColor: 'var(--theme-accent-subtle)',
                     borderColor: 'var(--theme-accent-border)',
                     color: 'var(--theme-accent)',
                   }}
-                  className="w-16 h-16 rounded-full border-2 flex items-center justify-center shadow-inner"
+                  className="w-16 h-16 rounded-full border flex items-center justify-center shadow-inner"
                 >
-                  <Search className="w-7 h-7 animate-pulse" />
+                  <Search className="w-6 h-6 animate-pulse" />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <h3
+              <div className="space-y-1.5">
+                <h2
                   style={{ color: 'var(--theme-text)' }}
-                  className="text-base font-semibold"
+                  className="text-xl font-semibold tracking-tight"
                 >
-                  Searching for someone online...
-                </h3>
-                <p
+                  Looking for someone...
+                </h2>
+                <div
                   style={{ color: 'var(--theme-text-muted)' }}
-                  className="text-xs"
+                  className="flex items-center justify-center gap-2 text-xs"
                 >
-                  Matching queue position: #{queuePosition || 1} • Filter: {genderPreference}
-                </p>
+                  <span>Queue position #{queuePosition || 1}</span>
+                  <span aria-hidden="true">·</span>
+                  <span className="capitalize">Filter: {genderPreference}</span>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <div className="flex items-center justify-center gap-2 pt-2">
                 <button
                   id="btn-cancel-search"
                   type="button"
                   onClick={onCancelSearch}
                   style={{
-                    backgroundColor: 'var(--theme-surface-solid)',
                     borderColor: 'var(--theme-border)',
                     color: 'var(--theme-text)',
                   }}
-                  className="py-2.5 px-4 rounded-xl border text-xs font-medium transition-all inline-flex items-center gap-1.5 cursor-pointer hover:opacity-90"
+                  className="py-2 px-5 rounded-full border text-xs font-medium transition-all inline-flex items-center gap-1.5 cursor-pointer hover:bg-white/[0.06]"
                 >
                   <X className="w-3.5 h-3.5" />
-                  <span>Cancel Search</span>
+                  <span>Cancel</span>
                 </button>
-
-                {onOpenTestMobile && (
-                  <button
-                    id="btn-searching-open-mobile"
-                    type="button"
-                    onClick={onOpenTestMobile}
-                    style={{
-                      backgroundColor: 'var(--theme-surface-solid)',
-                      borderColor: 'var(--theme-border-strong)',
-                      color: 'var(--theme-text)',
-                    }}
-                    className="py-2.5 px-3.5 rounded-xl border text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer hover:opacity-90"
-                  >
-                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Connect Phone</span>
-                  </button>
-                )}
 
                 {onSimulateTestMatch && (
                   <button
@@ -624,9 +464,8 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
                       borderColor: 'var(--theme-accent-border)',
                       color: 'var(--theme-accent)',
                     }}
-                    className="py-2.5 px-3.5 rounded-xl border text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer hover:opacity-90"
+                    className="py-2 px-4 rounded-full border text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer hover:opacity-90"
                   >
-                    <Bot className="w-3.5 h-3.5" />
                     <span>Instant Match</span>
                   </button>
                 )}
@@ -636,50 +475,41 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
 
           {callStatus === 'connecting' && (
             <div className="space-y-4">
-              <div
-                style={{
-                  backgroundColor: 'var(--theme-accent-subtle)',
-                  borderColor: 'var(--theme-accent-border)',
-                  color: 'var(--theme-accent)',
-                }}
-                className="w-14 h-14 mx-auto rounded-full border flex items-center justify-center animate-spin"
-              >
-                <Zap className="w-6 h-6" />
-              </div>
+              <div className="w-10 h-10 mx-auto rounded-full border-2 border-white/20 border-t-white animate-spin" />
               <div className="space-y-1">
-                <h3
+                <h2
                   style={{ color: 'var(--theme-text)' }}
-                  className="text-base font-semibold"
+                  className="text-lg font-semibold tracking-tight"
                 >
-                  Match Found!
-                </h3>
+                  Connecting...
+                </h2>
                 <p
                   style={{ color: 'var(--theme-text-muted)' }}
                   className="text-xs"
                 >
-                  Negotiating WebRTC stream & ECDH P-256 E2EE keys...
+                  Establishing secure peer-to-peer stream
                 </p>
               </div>
             </div>
           )}
 
           {callStatus === 'partner_skipped' && (
-            <div className="space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+            <div className="space-y-5">
+              <div className="w-12 h-12 mx-auto rounded-full bg-white/[0.08] flex items-center justify-center text-zinc-300">
                 <RotateCcw className="w-5 h-5" />
               </div>
-              <div className="space-y-1">
-                <h3
+              <div className="space-y-1.5">
+                <h2
                   style={{ color: 'var(--theme-text)' }}
-                  className="text-base font-semibold"
+                  className="text-xl font-semibold tracking-tight"
                 >
-                  Partner skipped to next person
-                </h3>
+                  Partner moved to next person
+                </h2>
                 <p
                   style={{ color: 'var(--theme-text-muted)' }}
                   className="text-xs"
                 >
-                  Ready to match with someone new?
+                  Ready to connect with someone new?
                 </p>
               </div>
               <button
@@ -690,7 +520,7 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
                   backgroundColor: 'var(--theme-accent)',
                   color: 'var(--theme-accent-text)',
                 }}
-                className="py-2.5 px-6 rounded-xl text-xs font-semibold shadow-lg transition-all inline-flex items-center gap-1.5 cursor-pointer hover:opacity-95"
+                className="py-3 px-7 rounded-full text-xs font-semibold shadow-md transition-all inline-flex items-center gap-2 cursor-pointer hover:opacity-95"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span>Find Next Person</span>
@@ -699,39 +529,28 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
           )}
 
           {callStatus === 'partner_disconnected' && (
-            <div className="space-y-4">
-              <div className="w-12 h-12 mx-auto rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
-                {disconnectReason?.includes('Camera') || disconnectReason?.includes('camera') ? (
-                  <VideoOff className="w-5 h-5" />
+            <div className="space-y-5">
+              <div className="w-12 h-12 mx-auto rounded-full bg-white/[0.08] flex items-center justify-center text-zinc-300">
+                {disconnectReason?.includes('camera') ? (
+                  <VideoOff className="w-5 h-5 text-rose-400" />
                 ) : (
                   <X className="w-5 h-5" />
                 )}
               </div>
               <div className="space-y-1.5">
-                <h3
+                <h2
                   style={{ color: 'var(--theme-text)' }}
-                  className="text-base font-semibold"
+                  className="text-xl font-semibold tracking-tight"
                 >
-                  {disconnectReason?.includes('Camera') || disconnectReason?.includes('camera')
-                    ? 'Call Ended Automatically'
-                    : 'Call Ended'}
-                </h3>
+                  Call Ended
+                </h2>
                 <p
                   style={{ color: 'var(--theme-text-muted)' }}
                   className="text-xs leading-relaxed max-w-sm mx-auto"
                 >
-                  {disconnectReason || 'The video chat has ended.'}
+                  {disconnectReason || 'The video conversation has ended.'}
                 </p>
               </div>
-
-              {disconnectReason?.includes('camera') && (
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-center gap-2 text-left">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>
-                    Camera must remain enabled throughout the video chat. Please turn on your camera to start a new match.
-                  </span>
-                </div>
-              )}
 
               <button
                 id="btn-match-after-disconnect"
@@ -741,7 +560,7 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
                   backgroundColor: 'var(--theme-accent)',
                   color: 'var(--theme-accent-text)',
                 }}
-                className="py-2.5 px-6 rounded-xl text-xs font-semibold shadow-lg transition-all inline-flex items-center gap-1.5 cursor-pointer hover:opacity-95"
+                className="py-3 px-7 rounded-full text-xs font-semibold shadow-md transition-all inline-flex items-center gap-2 cursor-pointer hover:opacity-95"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span>Find Someone New</span>
@@ -751,14 +570,14 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
         </div>
       )}
 
-      {/* Local Self Video (Picture-in-Picture Preview) */}
+      {/* Local Self Video (FaceTime-Style Picture-in-Picture Preview) */}
       <div
         id="local-video-pip"
         style={{
-          borderColor: 'var(--theme-border-strong)',
-          backgroundColor: 'var(--theme-surface-solid)',
+          borderColor: 'rgba(255, 255, 255, 0.15)',
+          backgroundColor: '#161618',
         }}
-        className="absolute bottom-4 right-4 w-36 h-28 sm:w-48 sm:h-36 rounded-2xl overflow-hidden border-2 shadow-2xl z-20 transition-all group"
+        className="absolute bottom-4 right-4 w-32 h-24 sm:w-44 sm:h-32 rounded-2xl overflow-hidden border shadow-2xl z-20 transition-all group"
       >
         <video
           ref={localVideoRef}
@@ -771,25 +590,18 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
 
         {/* Fallback when video disabled */}
         {!isVideoEnabled && !isScreenSharing && (
-          <div
-            style={{
-              backgroundColor: 'var(--theme-surface-solid)',
-              color: 'var(--theme-text-muted)',
-            }}
-            className="w-full h-full flex flex-col items-center justify-center p-2 text-center"
-          >
-            <VideoOff className="w-6 h-6 text-rose-400 mb-1" />
-            <span className="text-[10px] text-rose-400 font-medium">Camera Disabled</span>
-            <span className="text-[9px] opacity-70">Must be on to chat</span>
+          <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center bg-zinc-900 text-zinc-400">
+            <VideoOff className="w-5 h-5 text-zinc-500 mb-1" />
+            <span className="text-[10px] text-zinc-400 font-medium">Camera Off</span>
           </div>
         )}
 
         {/* Local Stream Overlay Badges */}
         <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between text-white">
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-medium">You</span>
+            <span className="text-[10px] font-medium text-zinc-200">You</span>
             {isVirtualStream && (
-              <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/30 text-amber-300" title="Virtual Avatar Mode">
+              <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/30 text-amber-300 font-medium">
                 Virtual
               </span>
             )}
@@ -806,7 +618,7 @@ export const VideoDisplay: React.FC<VideoDisplayProps> = ({
               </span>
             )}
             {!isAudioEnabled && (
-              <span className="p-1 rounded bg-rose-500/40 text-rose-300" title="Microphone muted">
+              <span className="p-1 rounded bg-rose-500/50 text-rose-200" title="Microphone muted">
                 <MicOff className="w-3 h-3" />
               </span>
             )}

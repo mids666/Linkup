@@ -88,22 +88,22 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
         borderColor: 'var(--theme-border)',
         color: 'var(--theme-text)',
       }}
-      className="h-20 border-t backdrop-blur-md px-4 md:px-8 flex items-center justify-between z-30 select-none transition-colors duration-200"
+      className="h-18 border-t backdrop-blur-2xl px-4 sm:px-8 flex items-center justify-between z-30 select-none transition-colors duration-200"
     >
-      {/* Left: Primary Call Action (Skip / Start) */}
+      {/* Left: Primary Action (Skip / Start) */}
       <div className="flex items-center gap-3">
         {isConnected ? (
           <button
             id="btn-skip-call"
             type="button"
             onClick={onSkip}
-            className="group py-2.5 px-5 sm:px-6 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-rose-600/20 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-            title="Skip to next person (Press Esc)"
+            className="py-2 px-4 sm:px-5 rounded-full bg-[#ff3b30] hover:bg-[#e03126] text-white font-medium text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+            title="Next conversation (Press Esc)"
           >
-            <RotateCcw className="w-4 h-4 group-hover:-rotate-90 transition-transform duration-200" />
-            <span>Skip User</span>
-            <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 rounded bg-rose-700/60 text-[10px] text-rose-200 border border-rose-600/60">
-              Esc
+            <RotateCcw className="w-4 h-4" />
+            <span>Next</span>
+            <kbd className="hidden sm:inline-block ml-0.5 px-1.5 py-0.5 rounded bg-black/20 text-[10px] text-white font-normal">
+              esc
             </kbd>
           </button>
         ) : (
@@ -115,10 +115,10 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
               backgroundColor: 'var(--theme-accent)',
               color: 'var(--theme-accent-text)',
             }}
-            className="py-2.5 px-5 sm:px-6 rounded-xl font-semibold text-xs sm:text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95 hover:opacity-95"
+            className="py-2 px-5 rounded-full font-semibold text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 hover:opacity-95"
           >
             <Search className="w-4 h-4" />
-            <span>Find Match</span>
+            <span>Start Chat</span>
           </button>
         )}
 
@@ -133,15 +133,10 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
               type="button"
               onClick={onToggleFavorite}
               style={{
-                backgroundColor: isCurrentPartnerFavorite
-                  ? 'rgba(245, 158, 11, 0.2)'
-                  : 'var(--theme-surface-solid)',
-                borderColor: isCurrentPartnerFavorite
-                  ? 'rgba(245, 158, 11, 0.4)'
-                  : 'var(--theme-border)',
-                color: isCurrentPartnerFavorite ? '#fbbf24' : 'var(--theme-text)',
+                borderColor: 'var(--theme-border)',
+                color: isCurrentPartnerFavorite ? '#fbbf24' : 'var(--theme-text-muted)',
               }}
-              className="p-2.5 rounded-xl border transition-all cursor-pointer hover:opacity-90"
+              className="p-2.5 rounded-full border hover:bg-white/[0.06] transition-all cursor-pointer"
               title={isCurrentPartnerFavorite ? 'Saved in Favorites' : 'Add to Favorites'}
             >
               <Star className={`w-4 h-4 ${isCurrentPartnerFavorite ? 'fill-amber-400' : ''}`} />
@@ -152,11 +147,10 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
               type="button"
               onClick={onOpenReport}
               style={{
-                backgroundColor: 'var(--theme-surface-solid)',
                 borderColor: 'var(--theme-border)',
                 color: 'var(--theme-text-muted)',
               }}
-              className="p-2.5 rounded-xl border hover:text-rose-400 hover:border-rose-500/40 transition-all cursor-pointer"
+              className="p-2.5 rounded-full border hover:text-rose-400 hover:bg-white/[0.06] transition-all cursor-pointer"
               title="Report User"
             >
               <Flag className="w-4 h-4" />
@@ -165,7 +159,7 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
         )}
       </div>
 
-      {/* Center: Media Controls */}
+      {/* Center: Apple FaceTime-style Round Media Controls */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Microphone Toggle */}
         <button
@@ -175,11 +169,11 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
           style={{
             backgroundColor: isAudioEnabled
               ? 'var(--theme-surface-solid)'
-              : 'rgba(244, 63, 94, 0.2)',
-            borderColor: isAudioEnabled ? 'var(--theme-border)' : 'rgba(244, 63, 94, 0.4)',
-            color: isAudioEnabled ? 'var(--theme-text)' : '#f43f5e',
+              : 'rgba(255, 59, 48, 0.15)',
+            borderColor: isAudioEnabled ? 'var(--theme-border)' : 'rgba(255, 59, 48, 0.3)',
+            color: isAudioEnabled ? 'var(--theme-text)' : '#ff3b30',
           }}
-          className="p-3 rounded-xl border transition-all cursor-pointer hover:opacity-90 shadow-sm"
+          className="w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer hover:opacity-90 shadow-sm"
           title={isAudioEnabled ? 'Mute Microphone' : 'Unmute Microphone'}
         >
           {isAudioEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
@@ -193,11 +187,11 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
           style={{
             backgroundColor: isVideoEnabled
               ? 'var(--theme-surface-solid)'
-              : 'rgba(244, 63, 94, 0.2)',
-            borderColor: isVideoEnabled ? 'var(--theme-border)' : 'rgba(244, 63, 94, 0.4)',
-            color: isVideoEnabled ? 'var(--theme-text)' : '#f43f5e',
+              : 'rgba(255, 59, 48, 0.15)',
+            borderColor: isVideoEnabled ? 'var(--theme-border)' : 'rgba(255, 59, 48, 0.3)',
+            color: isVideoEnabled ? 'var(--theme-text)' : '#ff3b30',
           }}
-          className="p-3 rounded-xl border transition-all cursor-pointer hover:opacity-90 shadow-sm"
+          className="w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer hover:opacity-90 shadow-sm"
           title={isVideoEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
         >
           {isVideoEnabled ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
@@ -215,55 +209,52 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
             borderColor: isScreenSharing ? 'var(--theme-accent)' : 'var(--theme-border)',
             color: isScreenSharing ? 'var(--theme-accent-text)' : 'var(--theme-text)',
           }}
-          className={`px-3.5 py-2.5 rounded-xl border font-medium text-xs flex items-center gap-2 transition-all cursor-pointer hover:opacity-90 shadow-sm ${
-            isScreenSharing ? 'animate-pulse' : ''
-          }`}
-          title={isScreenSharing ? 'Stop Screen Sharing' : 'Share your Screen'}
+          className="h-10 px-3.5 rounded-full border font-medium text-xs flex items-center gap-2 transition-all cursor-pointer hover:opacity-90 shadow-sm"
+          title={isScreenSharing ? 'Stop Screen Sharing' : 'Share Screen'}
         >
           <MonitorUp className="w-4 h-4" />
-          <span className="hidden md:inline">
-            {isScreenSharing ? 'Stop Sharing' : 'Share Screen'}
+          <span className="hidden md:inline font-normal">
+            {isScreenSharing ? 'Stop' : 'Share'}
           </span>
         </button>
 
-        {/* Virtual Mode Switcher */}
+        {/* Virtual Mode Toggle */}
         <button
           id="btn-toggle-virtual-stream"
           type="button"
           onClick={onToggleVirtualMode}
           style={{
             backgroundColor: isVirtualStream
-              ? 'rgba(245, 158, 11, 0.2)'
+              ? 'rgba(245, 158, 11, 0.15)'
               : 'var(--theme-surface-solid)',
-            borderColor: isVirtualStream ? 'rgba(245, 158, 11, 0.4)' : 'var(--theme-border)',
+            borderColor: isVirtualStream ? 'rgba(245, 158, 11, 0.3)' : 'var(--theme-border)',
             color: isVirtualStream ? '#f59e0b' : 'var(--theme-text-muted)',
           }}
-          className="p-3 rounded-xl border transition-all cursor-pointer hover:opacity-90 shadow-sm"
+          className="w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer hover:opacity-90 shadow-sm"
           title={isVirtualStream ? 'Using Virtual Avatar Stream' : 'Using Physical Camera'}
         >
           <Radio className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Right: Chat Drawer & E2EE Info */}
+      {/* Right: Messages & Security */}
       <div className="flex items-center gap-2">
         <button
           id="btn-open-crypto-inspector"
           type="button"
           onClick={onOpenCryptoInspector}
           style={{
-            backgroundColor: 'var(--theme-surface-solid)',
             borderColor: 'var(--theme-border)',
             color: 'var(--theme-text-muted)',
           }}
-          className="hidden lg:flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border cursor-pointer hover:opacity-90"
-          title="Inspect Cryptographic Parameters"
+          className="hidden lg:flex items-center gap-1.5 text-xs px-3 py-2 rounded-full border cursor-pointer hover:bg-white/[0.06] hover:text-[var(--theme-text)] transition-colors"
+          title="Security details"
         >
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>E2EE</span>
+          <span className="font-normal">Security</span>
         </button>
 
-        {/* Chat Drawer Toggle */}
+        {/* Encrypted Messages Drawer Toggle */}
         <button
           id="btn-toggle-chat-drawer"
           type="button"
@@ -275,8 +266,8 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
             borderColor: isChatOpen ? 'var(--theme-accent)' : 'var(--theme-border)',
             color: isChatOpen ? 'var(--theme-accent-text)' : 'var(--theme-text)',
           }}
-          className="relative p-3 rounded-xl border transition-all cursor-pointer hover:opacity-90 shadow-sm"
-          title="Open Encrypted Chat"
+          className="relative w-10 h-10 rounded-full border flex items-center justify-center transition-all cursor-pointer hover:opacity-90 shadow-sm"
+          title="Messages"
         >
           <MessageSquare className="w-4 h-4" />
           {unreadCount > 0 && !isChatOpen && (
@@ -285,7 +276,7 @@ export const ControlsBar: React.FC<ControlsBarProps> = ({
                 backgroundColor: 'var(--theme-accent)',
                 color: 'var(--theme-accent-text)',
               }}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-black"
+              className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center border border-black"
             >
               {unreadCount}
             </span>

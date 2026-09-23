@@ -1,6 +1,10 @@
 export type Gender = 'male' | 'female' | 'nonbinary' | 'other';
 export type GenderPreference = 'any' | 'male' | 'female' | 'nonbinary';
 export type ThemeId =
+  | 'apple-dark'
+  | 'apple-light'
+  | 'apple-titanium'
+  | 'apple-midnight'
   | 'cyber-dark'
   | 'neon-violet'
   | 'sunset-ember'

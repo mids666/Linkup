@@ -89,7 +89,7 @@ export default function App() {
   const [isMobileTestOpen, setIsMobileTestOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const activeTheme = THEMES[currentTheme] || THEMES['cyber-dark'];
+  const activeTheme = THEMES[currentTheme] || THEMES['apple-dark'];
 
   const handleSelectTheme = (themeId: ThemeId) => {
     setCurrentTheme(themeId);
